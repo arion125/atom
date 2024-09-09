@@ -1,0 +1,27 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+*.log
+
+# Output TypeScript
+dist/
+build/
+*.tsbuildinfo
+
+# Ambiente
+.env
+
+# Sistema Operativo
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# File temporanei
+*.tmp
+*.bak
