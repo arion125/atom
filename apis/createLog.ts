@@ -1,6 +1,6 @@
-import { CreateLogError } from '../common/errors';
-import { CreateLogPayload, DefaultApiResponse } from '../types/types';
-import axios, { AxiosResponse } from 'axios';
+import { CreateLogError } from "../common/errors";
+import { CreateLogPayload, DefaultApiResponse } from "../types/types";
+import axios, { AxiosResponse } from "axios";
 
 // POST - per creare un log su supabase
 export const createLog = async (
@@ -9,7 +9,7 @@ export const createLog = async (
   try {
     const response: AxiosResponse<DefaultApiResponse> =
       await axios.post<DefaultApiResponse>(
-        'https://n8n.staratlasitalia.com/webhook/logAction',
+        "https://n8n.staratlasitalia.com/webhook/logAction",
         data,
       );
     return response.data;

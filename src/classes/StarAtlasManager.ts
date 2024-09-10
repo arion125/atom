@@ -3,17 +3,17 @@ import {
   Keypair,
   PublicKey,
   TransactionSignature,
-} from '@solana/web3.js';
-import { AnchorProvider, Program, Wallet } from '@staratlas/anchor';
+} from "@solana/web3.js";
+import { AnchorProvider, Program, Wallet } from "@staratlas/anchor";
 import {
   Priority,
   StarAtlasManagerPrograms,
   MainData,
   ResourceMints,
-} from '../../types/types';
-import { getMainData } from '../../apis/getMainData';
-import { getResourceMints } from '../../apis/getResourceMints';
-import { GetMainDataError, GetResourceMintsError } from '../../common/errors';
+} from "../../types/types";
+import { getMainData } from "../../apis/getMainData";
+import { getResourceMints } from "../../apis/getResourceMints";
+import { GetMainDataError, GetResourceMintsError } from "../../common/errors";
 import {
   readFromRPCOrError,
   readAllFromRPC,
@@ -23,8 +23,8 @@ import {
   InstructionReturn,
   buildDynamicTransactions,
   sendTransaction,
-} from '@staratlas/data-source';
-import { GALACTIC_MARKETPLACE_IDL } from '@staratlas/galactic-marketplace';
+} from "@staratlas/data-source";
+import { GALACTIC_MARKETPLACE_IDL } from "@staratlas/galactic-marketplace";
 import {
   Game,
   GameState,
@@ -34,19 +34,18 @@ import {
   Ship,
   StarbaseLevelInfo,
   StarbaseUpkeepInfo,
-} from '@staratlas/sage';
-import { CRAFTING_IDL } from '@staratlas/crafting';
-import { CARGO_IDL, CargoType, CargoStatsDefinition } from '@staratlas/cargo';
-import { PLAYER_PROFILE_IDL } from '@staratlas/player-profile';
-import { PROFILE_VAULT_IDL } from '@staratlas/profile-vault';
-import { PROFILE_FACTION_IDL } from '@staratlas/profile-faction';
-import { POINTS_IDL } from '@staratlas/points';
-import { POINTS_STORE_IDL } from '@staratlas/points-store';
-import { ATLAS_FEE_PAYER_IDL } from '@staratlas/atlas-prime';
-import { CLAIM_STAKE_IDL } from '@staratlas/claim-stake';
-import { SCORE_IDL } from '@staratlas/score';
-import { ENLIST_TO_FACTION_IDL } from '@staratlas/faction-enlistment';
-
+} from "@staratlas/sage";
+import { CRAFTING_IDL } from "@staratlas/crafting";
+import { CARGO_IDL, CargoType, CargoStatsDefinition } from "@staratlas/cargo";
+import { PLAYER_PROFILE_IDL } from "@staratlas/player-profile";
+import { PROFILE_VAULT_IDL } from "@staratlas/profile-vault";
+import { PROFILE_FACTION_IDL } from "@staratlas/profile-faction";
+import { POINTS_IDL } from "@staratlas/points";
+import { POINTS_STORE_IDL } from "@staratlas/points-store";
+import { ATLAS_FEE_PAYER_IDL } from "@staratlas/atlas-prime";
+import { CLAIM_STAKE_IDL } from "@staratlas/claim-stake";
+import { SCORE_IDL } from "@staratlas/score";
+import { ENLIST_TO_FACTION_IDL } from "@staratlas/faction-enlistment";
 export class StarAtlasManager {
   // --- ATTRIBUTES ---
   // Connection
@@ -78,8 +77,8 @@ export class StarAtlasManager {
 
   // --- METHODS ---
   private constructor() {
-    this.connection = new Connection(process.env.MAIN_RPC_URL, 'confirmed');
-    this.priority = 'None';
+    this.connection = new Connection("MAIN_RPC_URL", "confirmed");
+    this.priority = "None";
     this.programs = {} as StarAtlasManagerPrograms;
   }
 
@@ -254,7 +253,7 @@ export class StarAtlasManager {
         this.programs.sageProgram,
         this.mainData.game.gameId,
         Game,
-        'confirmed',
+        "confirmed",
       );
 
       const gameState: GameState = await readFromRPCOrError(
@@ -262,7 +261,7 @@ export class StarAtlasManager {
         this.programs.sageProgram,
         game.data.gameState,
         GameState,
-        'confirmed',
+        "confirmed",
       );
 
       const cargoStatsDefinition = await readFromRPCOrError(
@@ -270,7 +269,7 @@ export class StarAtlasManager {
         this.programs.cargoProgram,
         game.data.cargo.statsDefinition,
         CargoStatsDefinition,
-        'confirmed',
+        "confirmed",
       );
 
       return { game, gameState, cargoStatsDefinition };
@@ -285,11 +284,11 @@ export class StarAtlasManager {
         this.provider.connection,
         this.programs.sageProgram,
         Ship,
-        'confirmed',
+        "confirmed",
       );
 
       const ships = fetchShips.flatMap((item) =>
-        item.type === 'ok' ? [item.data] : [],
+        item.type === "ok" ? [item.data] : [],
       );
 
       return ships;
@@ -304,11 +303,11 @@ export class StarAtlasManager {
         this.provider.connection,
         this.programs.cargoProgram,
         CargoType,
-        'confirmed',
+        "confirmed",
       );
 
       const cargoTypes = fetchCargoTypes.flatMap((item) =>
-        item.type === 'ok' ? [item.data] : [],
+        item.type === "ok" ? [item.data] : [],
       );
 
       return cargoTypes;
@@ -346,11 +345,11 @@ export class StarAtlasManager {
       throw txs.error;
     }
 
-    let txSignature: TransactionSignature = '';
+    let txSignature: TransactionSignature = "";
 
     for (const tx of txs.value) {
       const result = await sendTransaction(tx, this.provider.connection, {
-        commitment: 'confirmed',
+        commitment: "confirmed",
         sendOptions: {
           skipPreflight: false,
         },

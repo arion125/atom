@@ -1,48 +1,26 @@
-import { BN } from '@staratlas/anchor';
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { BN } from "@staratlas/anchor";
+import { PublicKey } from "@solana/web3.js";
 import {
   DepositCargoToFleetInput,
   Fleet,
   FleetShips,
   FleetStateData,
-  IdleToLoadingBayInput,
-  LoadingBayToIdleInput,
-  PlanetType,
   ShipStats,
-  StarbaseCreateCargoPodInput,
-  StarbasePlayer,
-  StartMiningAsteroidInput,
-  StartSubwarpInput,
-  StopMiningAsteroidInput,
-  WarpToCoordinateInput,
-  WithdrawCargoFromFleetInput,
-} from '@staratlas/sage';
-import { CargoPod, CargoType } from '@staratlas/cargo';
+} from "@staratlas/sage";
+import { CargoPod, CargoType } from "@staratlas/cargo";
+import { InstructionReturn, byteArrayToString } from "@staratlas/data-source";
+import { PlayerHandler } from "./PlayerHandler";
+import { readFromRPCOrError } from "@staratlas/data-source";
+import { StarAtlasManager } from "./StarAtlasManager";
+import { getAccount } from "@solana/spl-token";
 import {
-  InstructionReturn,
-  byteArrayToString,
-  readAllFromRPC,
-} from '@staratlas/data-source';
-import { PlayerHandler } from './PlayerHandler';
-import { readFromRPCOrError } from '@staratlas/data-source';
-import { StarAtlasManager } from './StarAtlasManager';
-import {
-  Account,
-  getAccount,
-  getAssociatedTokenAddressSync,
-} from '@solana/spl-token';
-import {
-  Action,
   CargoPodEnhanced,
   CargoPodType,
   LoadCargo,
   LoadedResources,
-  StartMining,
-  Trip,
-  UnloadCargo,
-} from '../../types/types';
-import { getTokenAccountsByOwner } from '../../utils/getTokenAccountsByOwner';
-import { getTokenAccountBalance } from '../../utils/getTokenAccountBalance';
+} from "../../types/types";
+import { getTokenAccountsByOwner } from "../../utils/getTokenAccountsByOwner";
+import { getTokenAccountBalance } from "../../utils/getTokenAccountBalance";
 
 export class FleetHandler {
   // --- ATTRIBUTES ---
@@ -109,7 +87,7 @@ export class FleetHandler {
         this.starAtlasManager.getPrograms().sageProgram,
         this.fleetKey,
         Fleet,
-        'confirmed',
+        "confirmed",
       );
 
       return fleet;
@@ -130,7 +108,7 @@ export class FleetHandler {
         this.starAtlasManager.getPrograms().sageProgram,
         fleetShipsKey,
         FleetShips,
-        'confirmed',
+        "confirmed",
       );
 
       return fleetShips;
@@ -224,20 +202,20 @@ export class FleetHandler {
   ): Promise<CargoPodEnhanced> {
     try {
       const cargoPodKey =
-        type === 'CargoHold'
+        type === "CargoHold"
           ? this.fleet.data.cargoHold
-          : type === 'FuelTank'
+          : type === "FuelTank"
             ? this.fleet.data.fuelTank
-            : type === 'AmmoBank'
+            : type === "AmmoBank"
               ? this.fleet.data.ammoBank
               : (null as never);
 
       const cargoPodMaxCapacity: BN =
-        type === 'CargoHold'
+        type === "CargoHold"
           ? new BN(this.stats.cargoStats.cargoCapacity)
-          : type === 'FuelTank'
+          : type === "FuelTank"
             ? new BN(this.stats.cargoStats.fuelCapacity)
-            : type === 'AmmoBank'
+            : type === "AmmoBank"
               ? new BN(this.stats.cargoStats.ammoCapacity)
               : new BN(0);
 
@@ -316,7 +294,7 @@ export class FleetHandler {
         this.starAtlasManager.getPrograms().cargoProgram,
         cargoPodKey,
         CargoPod,
-        'confirmed',
+        "confirmed",
       );
       return cargoPod;
     } catch (e) {
@@ -343,9 +321,9 @@ export class FleetHandler {
       this.state = fleet.state;
 
       const [fuelTank, ammoBank, cargoHold] = await Promise.all([
-        await this.getCurrentCargoDataByType('FuelTank'),
-        await this.getCurrentCargoDataByType('AmmoBank'),
-        await this.getCurrentCargoDataByType('CargoHold'),
+        await this.getCurrentCargoDataByType("FuelTank"),
+        await this.getCurrentCargoDataByType("AmmoBank"),
+        await this.getCurrentCargoDataByType("CargoHold"),
       ]);
 
       this.fuelTank = fuelTank;
@@ -396,7 +374,7 @@ export class FleetHandler {
     );
 
     if (starbasePodMintAtaBalance === 0)
-      throw new Error('No resource in starbase');
+      throw new Error("No resource in starbase");
 
     const cargoHold = this.cargoHold;
 
@@ -444,7 +422,7 @@ export class FleetHandler {
       this.starAtlasManager.getAsyncSigner(),
       this.owner.getPlayerProfile().key,
       this.owner.getPlayerProfileFaction().key,
-      'funder',
+      "funder",
       starbase,
       starbasePlayer,
       this.fleetKey,

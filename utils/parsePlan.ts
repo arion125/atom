@@ -1,14 +1,14 @@
-import { Action, ActionRaw, Plan, PlanRaw } from '../types/types';
-import { BN } from '@staratlas/anchor';
-import { parsePublicKey } from './parsePublicKey';
+import { Action, ActionRaw, Plan, PlanRaw } from "../types/types";
+import { BN } from "@staratlas/anchor";
+import { parsePublicKey } from "./parsePublicKey";
 
 // Funzione per convertire ogni azione nel suo tipo corretto
 const parseAction = (action: ActionRaw): Action => {
   switch (action.ix) {
-    case 'loadCargo':
-    case 'refuel':
-    case 'reammo':
-    case 'refood':
+    case "loadCargo":
+    case "refuel":
+    case "reammo":
+    case "refood":
       return {
         ...action,
         sector: {
@@ -35,7 +35,7 @@ const parseAction = (action: ActionRaw): Action => {
           ),
         },
       };
-    case 'unloadCargo':
+    case "unloadCargo":
       return {
         ...action,
         sector: {
@@ -62,7 +62,7 @@ const parseAction = (action: ActionRaw): Action => {
           ),
         },
       };
-    case 'startMining':
+    case "startMining":
       return {
         ...action,
         sector: {
@@ -75,7 +75,7 @@ const parseAction = (action: ActionRaw): Action => {
         resource: parsePublicKey(action.resource),
         mineItem: parsePublicKey(action.mineItem),
       };
-    case 'trip':
+    case "trip":
       return {
         ...action,
         sector: {

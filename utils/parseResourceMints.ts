@@ -1,5 +1,5 @@
-import { ResourceMints, ResourceMintsRaw } from '../types/types';
-import { parsePublicKey } from './parsePublicKey';
+import { ResourceMints, ResourceMintsRaw } from "../types/types";
+import { parsePublicKey } from "./parsePublicKey";
 
 // Funzione per convertire un piano nel tipo corretto
 export const parseResourceMints = (

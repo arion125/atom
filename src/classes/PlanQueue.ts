@@ -1,14 +1,11 @@
 // src/PlanQueue.ts
 
-import { Action, Route } from '../../types/types';
-import { Fleet } from '@staratlas/sage';
-import { Keypair } from '@solana/web3.js';
-import { StarAtlasManager } from './StarAtlasManager';
-import { AnchorProvider } from '@staratlas/anchor';
-import { PlayerHandler } from './PlayerHandler';
-import { FleetHandler } from './FleetHandler';
-import { createLog } from '../../apis/createLog';
-import { resourceNames } from '../../common/constants';
+import { Action, Route } from "../../types/types";
+import { StarAtlasManager } from "./StarAtlasManager";
+import { PlayerHandler } from "./PlayerHandler";
+import { FleetHandler } from "./FleetHandler";
+import { createLog } from "../../apis/createLog";
+import { resourceNames } from "../../common/constants";
 
 export class PlanQueue {
   private starAtlasManager: StarAtlasManager;
@@ -57,10 +54,10 @@ export class PlanQueue {
       this.lastActionInProgress = true;
       // Implementare logica per gestire ogni tipo di azione
       switch (action.ix) {
-        case 'refuel':
-        case 'reammo':
-        case 'refood':
-        case 'loadCargo': {
+        case "refuel":
+        case "reammo":
+        case "refood":
+        case "loadCargo": {
           const ixs = await this.fleet.ixLoadCargo(action);
           await this.starAtlasManager.sendDynamicTransaction(ixs);
           await createLog({
@@ -70,11 +67,11 @@ export class PlanQueue {
           });
           this.lastActionInProgress = false;
         }
-        case 'unloadCargo': {
+        case "unloadCargo": {
         }
-        case 'startMining': {
+        case "startMining": {
         }
-        case 'trip': {
+        case "trip": {
         }
       }
 

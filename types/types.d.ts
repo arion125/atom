@@ -1,26 +1,20 @@
 // types/types.d.ts
 
-import { PublicKey } from '@solana/web3.js';
-import { BN } from '@staratlas/anchor';
-import { GalacticMarketplaceIDLProgram } from '@staratlas/galactic-marketplace';
-import {
-  Game,
-  GameAccount,
-  GameState,
-  GameStateAccount,
-  SageIDLProgram,
-} from '@staratlas/sage';
-import { CraftingIDLProgram } from '@staratlas/crafting';
-import { CargoIDLProgram } from '@staratlas/cargo';
-import { PlayerProfileIDLProgram } from '@staratlas/player-profile';
-import { ProfileVaultIDLProgram } from '@staratlas/profile-vault';
-import { ProfileFactionIDLProgram } from '@staratlas/profile-faction';
-import { PointsIDLProgram } from '@staratlas/points';
-import { PointsStoreIDLProgram } from '@staratlas/points-store';
-import { AtlasFeePayerIDLProgram } from '@staratlas/atlas-prime';
-import { ClaimStakeIDLProgram } from '@staratlas/claim-stake';
-import { ScoreIDLProgram } from '@staratlas/score';
-import { FactionEnlistmentIDLProgram } from '@staratlas/faction-enlistment';
+import { PublicKey } from "@solana/web3.js";
+import { BN } from "@staratlas/anchor";
+import { GalacticMarketplaceIDLProgram } from "@staratlas/galactic-marketplace";
+import { SageIDLProgram } from "@staratlas/sage";
+import { CraftingIDLProgram } from "@staratlas/crafting";
+import { CargoIDLProgram } from "@staratlas/cargo";
+import { PlayerProfileIDLProgram } from "@staratlas/player-profile";
+import { ProfileVaultIDLProgram } from "@staratlas/profile-vault";
+import { ProfileFactionIDLProgram } from "@staratlas/profile-faction";
+import { PointsIDLProgram } from "@staratlas/points";
+import { PointsStoreIDLProgram } from "@staratlas/points-store";
+import { AtlasFeePayerIDLProgram } from "@staratlas/atlas-prime";
+import { ClaimStakeIDLProgram } from "@staratlas/claim-stake";
+import { ScoreIDLProgram } from "@staratlas/score";
+import { FactionEnlistmentIDLProgram } from "@staratlas/faction-enlistment";
 
 // ACTION
 interface ActionBaseRaw {
@@ -42,7 +36,7 @@ interface ActionBase {
 }
 
 export interface LoadCargoRaw extends ActionBaseRaw {
-  ix: 'loadCargo' | 'refuel' | 'reammo' | 'refood';
+  ix: "loadCargo" | "refuel" | "reammo" | "refood";
   cargoPodType: string;
   resource: string;
   amount: number;
@@ -59,7 +53,7 @@ export interface LoadCargoRaw extends ActionBaseRaw {
 }
 
 export interface LoadCargo extends ActionBase {
-  ix: 'loadCargo' | 'refuel' | 'reammo' | 'refood';
+  ix: "loadCargo" | "refuel" | "reammo" | "refood";
   cargoPodType: string;
   resource: PublicKey;
   amount: number;
@@ -76,7 +70,7 @@ export interface LoadCargo extends ActionBase {
 }
 
 export interface UnloadCargoRaw extends ActionBaseRaw {
-  ix: 'unloadCargo';
+  ix: "unloadCargo";
   cargoPodType: string;
   resource: string;
   amount: number;
@@ -93,7 +87,7 @@ export interface UnloadCargoRaw extends ActionBaseRaw {
 }
 
 export interface UnloadCargo extends ActionBase {
-  ix: 'unloadCargo';
+  ix: "unloadCargo";
   cargoPodType: string;
   resource: PublicKey;
   amount: number;
@@ -110,7 +104,7 @@ export interface UnloadCargo extends ActionBase {
 }
 
 export interface StartMiningRaw extends ActionBaseRaw {
-  ix: 'startMining';
+  ix: "startMining";
   resource: string;
   mineItem: string;
   timeNeeded: number;
@@ -120,7 +114,7 @@ export interface StartMiningRaw extends ActionBaseRaw {
 }
 
 export interface StartMining extends ActionBase {
-  ix: 'startMining';
+  ix: "startMining";
   resource: PublicKey;
   mineItem: PublicKey;
   timeNeeded: number;
@@ -130,7 +124,7 @@ export interface StartMining extends ActionBase {
 }
 
 export interface TripRaw extends ActionBaseRaw {
-  ix: 'trip';
+  ix: "trip";
   movementType: string;
   destinationSector: string;
   distance: number;
@@ -138,18 +132,14 @@ export interface TripRaw extends ActionBaseRaw {
 }
 
 export interface Trip extends ActionBase {
-  ix: 'trip';
+  ix: "trip";
   movementType: string;
   destinationSector: PublicKey;
   distance: number;
   fuelNeeded: number;
 }
 
-export type ActionRaw =
-  | LoadCargoRaw
-  | UnloadCargoRaw
-  | StartMiningRaw
-  | TripRaw;
+export type ActionRaw = LoadCargoRaw | UnloadCargoRaw | StartMiningRaw | TripRaw;
 export type Action = LoadCargo | UnloadCargo | StartMining | Trip;
 
 // ROUTE
@@ -363,9 +353,9 @@ export interface StarAtlasManagerPrograms {
   factionEnlistmentProgram: FactionEnlistmentIDLProgram;
 }
 
-export type Priority = 'None' | 'Low' | 'Medium' | 'High';
+export type Priority = "None" | "Low" | "Medium" | "High";
 
-export type CargoPodType = 'FuelTank' | 'AmmoBank' | 'CargoHold';
+export type CargoPodType = "FuelTank" | "AmmoBank" | "CargoHold";
 
 // FLEET HANDLER CLASS
 export type LoadedResources = {
@@ -383,3 +373,28 @@ export type CargoPodEnhanced = {
   maxCapacity: BN;
   fullLoad: boolean;
 };
+
+// CRYPTO
+export type EncryptedData = {
+  salt: string;
+  content: string;
+  iv: string;
+  tag: string;
+};
+
+type CryptoContent = {
+  salt: string;
+  content: string;
+  iv: string;
+  tag: string;
+};
+
+type CryptoResult =
+  | { type: "Success"; result?: CryptoContent | Buffer }
+  | { type: "EncryptionFailed" }
+  | { type: "DecryptionFailed" }
+  | { type: "SecretTooShort" }
+  | { type: "InvalidSaltLength" }
+  | { type: "InvalidIVLength" }
+  | { type: "InvalidTagLength" }
+  | { type: "InvalidContentHex" };

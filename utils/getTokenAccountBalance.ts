@@ -1,4 +1,4 @@
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from "@solana/web3.js";
 
 export const getTokenAccountBalance = async (
   connection: Connection,
@@ -7,7 +7,7 @@ export const getTokenAccountBalance = async (
   try {
     const tokenAccount = await connection.getTokenAccountBalance(
       tokenAccounKey,
-      'confirmed',
+      "confirmed",
     );
     if (tokenAccount.value.uiAmount == null) {
       return 0;

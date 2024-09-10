@@ -1,10 +1,10 @@
-import { PublicKey } from '@solana/web3.js';
-import { PlayerProfile, PlayerName } from '@staratlas/player-profile';
-import { ProfileFactionAccount } from '@staratlas/profile-faction';
-import { readFromRPCOrError, readAllFromRPC } from '@staratlas/data-source';
-import { SagePlayerProfile } from '@staratlas/sage';
-import { UserPoints } from '@staratlas/points';
-import { StarAtlasManager } from './StarAtlasManager';
+import { PublicKey } from "@solana/web3.js";
+import { PlayerProfile, PlayerName } from "@staratlas/player-profile";
+import { ProfileFactionAccount } from "@staratlas/profile-faction";
+import { readFromRPCOrError, readAllFromRPC } from "@staratlas/data-source";
+import { SagePlayerProfile } from "@staratlas/sage";
+import { UserPoints } from "@staratlas/points";
+import { StarAtlasManager } from "./StarAtlasManager";
 
 export class PlayerHandler {
   // --- ATTRIBUTES ---
@@ -80,7 +80,7 @@ export class PlayerHandler {
         this.starAtlasManager.getPrograms().playerProfileProgram,
         this.playerProfileKey,
         PlayerProfile,
-        'confirmed',
+        "confirmed",
       );
 
       return playerProfile;
@@ -101,7 +101,7 @@ export class PlayerHandler {
         this.starAtlasManager.getPrograms().playerProfileProgram,
         playerNameKey,
         PlayerName,
-        'confirmed',
+        "confirmed",
       );
 
       return playerName;
@@ -122,7 +122,7 @@ export class PlayerHandler {
         this.starAtlasManager.getPrograms().profileFactionProgram,
         profileFaction,
         ProfileFactionAccount,
-        'confirmed',
+        "confirmed",
       );
 
       return playerProfileFaction;
@@ -144,7 +144,7 @@ export class PlayerHandler {
         this.starAtlasManager.getPrograms().sageProgram,
         sagePlayerProfile,
         SagePlayerProfile,
-        'confirmed',
+        "confirmed",
       );
 
       return playerProfileSage;
@@ -159,7 +159,7 @@ export class PlayerHandler {
         this.starAtlasManager.getProvider().connection,
         this.starAtlasManager.getPrograms().pointsProgram,
         UserPoints,
-        'confirmed',
+        "confirmed",
         [
           {
             memcmp: {
@@ -171,7 +171,7 @@ export class PlayerHandler {
       );
 
       const userPoints = fetchUserPoints.flatMap((item) =>
-        item.type === 'ok' ? [item.data] : [],
+        item.type === "ok" ? [item.data] : [],
       );
 
       return userPoints;
