@@ -1,5 +1,5 @@
-import { PublicKey, Connection } from '@solana/web3.js';
-import { getParsedTokenAccountsByOwner } from '@staratlas/data-source';
+import { PublicKey, Connection } from "@solana/web3.js";
+import { getParsedTokenAccountsByOwner } from "@staratlas/data-source";
 
 export const getTokenAccountsByOwner = async (
   connection: Connection,

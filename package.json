@@ -13,6 +13,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/libsodium-wrappers": "^0.7.14",
     "prettier": "^3.3.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4"
@@ -28,10 +30,13 @@
     "@staratlas/factory": "^0.7.1",
     "@staratlas/galactic-marketplace": "^0.12.0",
     "@staratlas/profile-vault": "^0.11.0",
-    "@staratlas/sage": "^1.6.0",
+    "@staratlas/sage": "^1.7.1",
     "@staratlas/score": "^0.12.0",
     "axios": "^1.7.7",
     "bs58": "^6.0.0",
-    "dotenv": "^16.4.5"
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "fs-extra": "^11.2.0",
+    "libsodium-wrappers": "^0.7.15"
   }
 }

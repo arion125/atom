@@ -1,6 +1,6 @@
-import { GetPlanError } from '../common/errors';
-import { ApiResponse, Base64Script, GetPlanParams } from '../types/types';
-import axios, { AxiosResponse } from 'axios';
+import { GetPlanError } from "../common/errors";
+import { ApiResponse, Base64Script, GetPlanParams } from "../types/types";
+import axios, { AxiosResponse } from "axios";
 
 // GET - per scaricare il codice base64 del piano dal db
 export const getPlan = async (data: GetPlanParams): Promise<Base64Script> => {
