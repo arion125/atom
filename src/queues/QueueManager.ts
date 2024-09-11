@@ -1,15 +1,12 @@
 // src/QueueManager.ts
 
 import { PlanQueue } from "./PlanQueue";
-import { Plan } from "../../types/types";
-import {
-  QueueAlreadyExistsError,
-  QueueNotFoundError,
-} from "../../common/errors";
+import { Plan } from "../types/types";
+import { QueueAlreadyExistsError, QueueNotFoundError } from "../common/errors";
 import { KeypairManager } from "./KeypairManager";
-import { StarAtlasManager } from "./StarAtlasManager";
-import { PlayerHandler } from "./PlayerHandler";
-import { FleetHandler } from "./FleetHandler";
+import { StarAtlasManager } from "../core/StarAtlasManager";
+import { PlayerHandler } from "../core/PlayerHandler";
+import { FleetHandler } from "../core/FleetHandler";
 
 export class QueueManager {
   private queues: Map<string, PlanQueue>;
@@ -33,11 +30,7 @@ export class QueueManager {
       const keypair = this.keypairManager.getKeypair(plan.pubkey); // 1. seleziona il keypair
       const starAtlasManager = await StarAtlasManager.init(keypair); // 2. crea un star atlas manager
       const player = await PlayerHandler.init(starAtlasManager, plan.profile);
-      const fleet = await FleetHandler.init(
-        starAtlasManager,
-        player,
-        plan.fleet,
-      );
+      const fleet = await FleetHandler.init(starAtlasManager, player, plan.fleet);
 
       const queue = new PlanQueue(
         starAtlasManager,

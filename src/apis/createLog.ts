@@ -3,9 +3,7 @@ import { CreateLogPayload, DefaultApiResponse } from "../types/types";
 import axios, { AxiosResponse } from "axios";
 
 // POST - per creare un log su supabase
-export const createLog = async (
-  data: CreateLogPayload,
-): Promise<DefaultApiResponse> => {
+export const createLog = async (data: CreateLogPayload): Promise<DefaultApiResponse> => {
   try {
     const response: AxiosResponse<DefaultApiResponse> =
       await axios.post<DefaultApiResponse>(

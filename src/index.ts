@@ -1,13 +1,13 @@
 import * as readline from "readline";
-import { QueueManager } from "./classes/QueueManager";
-import { Base64ToJsonError, KeypairNotFoundError } from "../common/errors";
+import { QueueManager } from "./queues/QueueManager";
+import { Base64ToJsonError, KeypairNotFoundError } from "./common/errors";
 import { PublicKey } from "@solana/web3.js";
-import { KeypairManager } from "./classes/KeypairManager";
-import { getPlan } from "../apis/getPlan";
-import { base64ToJson } from "../utils/base64ToJson";
-import { setKeypair } from "../utils/keypair/setKeypair";
+import { KeypairManager } from "./queues/KeypairManager";
+import { getPlan } from "./apis/getPlan";
+import { base64ToJson } from "./utils/base64ToJson";
+import { setKeypair } from "./utils/keypair/setKeypair";
 import { Command } from "commander";
-import { removeKeypair } from "../utils/keypair/removeKeypair";
+import { removeKeypair } from "./utils/keypair/removeKeypair";
 
 const test = async () => {
   const program = new Command();

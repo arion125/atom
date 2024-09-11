@@ -1,19 +1,14 @@
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  TransactionSignature,
-} from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, TransactionSignature } from "@solana/web3.js";
 import { AnchorProvider, Program, Wallet } from "@staratlas/anchor";
 import {
   Priority,
   StarAtlasManagerPrograms,
   MainData,
   ResourceMints,
-} from "../../types/types";
-import { getMainData } from "../../apis/getMainData";
-import { getResourceMints } from "../../apis/getResourceMints";
-import { GetMainDataError, GetResourceMintsError } from "../../common/errors";
+} from "../types/types";
+import { getMainData } from "../apis/getMainData";
+import { getResourceMints } from "../apis/getResourceMints";
+import { GetMainDataError, GetResourceMintsError } from "../common/errors";
 import {
   readFromRPCOrError,
   readAllFromRPC,
@@ -287,9 +282,7 @@ export class StarAtlasManager {
         "confirmed",
       );
 
-      const ships = fetchShips.flatMap((item) =>
-        item.type === "ok" ? [item.data] : [],
-      );
+      const ships = fetchShips.flatMap((item) => (item.type === "ok" ? [item.data] : []));
 
       return ships;
     } catch (e) {
@@ -328,9 +321,7 @@ export class StarAtlasManager {
    * Dato il mint di una risorsa, consente di ottenere il cargoType
    */
   public getCargoTypeByMint(mint: PublicKey) {
-    const [cargoType] = this.cargoTypes.filter((item) =>
-      item.data.mint.equals(mint),
-    );
+    const [cargoType] = this.cargoTypes.filter((item) => item.data.mint.equals(mint));
     return cargoType;
   }
 
@@ -366,10 +357,7 @@ export class StarAtlasManager {
   }
 
   // Instructions
-  public ixCreateAssociatedTokenAccountIdempotent(
-    owner: PublicKey,
-    mint: PublicKey,
-  ) {
+  public ixCreateAssociatedTokenAccountIdempotent(owner: PublicKey, mint: PublicKey) {
     const associatedTokenAccount = createAssociatedTokenAccountIdempotent(
       mint,
       owner,

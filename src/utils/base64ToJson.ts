@@ -1,5 +1,5 @@
 import { parsePlan } from "./parsePlan";
-import { Plan, PlanRaw } from "./../types/types.d";
+import { Plan, PlanRaw } from "../types/types";
 import { Base64ToJsonError } from "../common/errors";
 
 // Processa la stringa in base64 per convertirla in json e crea la coda

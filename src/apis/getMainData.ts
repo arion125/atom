@@ -9,8 +9,7 @@ export const getMainData = async (): Promise<MainData> => {
     const response: AxiosResponse<ApiResponse<MainDataRaw>> = await axios.get<
       ApiResponse<MainDataRaw>
     >("https://n8n.staratlasitalia.com/webhook/getMainData");
-    if (response.data.code !== 200)
-      throw new GetMainDataError(response.data.error);
+    if (response.data.code !== 200) throw new GetMainDataError(response.data.error);
     return parseMainData(response.data.data);
   } catch (error) {
     throw new GetMainDataError(`${error}`);

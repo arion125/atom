@@ -14,9 +14,7 @@ const parseAction = (action: ActionRaw): Action => {
         sector: {
           ...action.sector,
           key: parsePublicKey(action.sector.key),
-          coordinates: action.sector.coordinates.map(
-            (coord: string) => new BN(coord),
-          ),
+          coordinates: action.sector.coordinates.map((coord: string) => new BN(coord)),
         },
         resource: parsePublicKey(action.resource),
         starbase: parsePublicKey(action.starbase),
@@ -41,9 +39,7 @@ const parseAction = (action: ActionRaw): Action => {
         sector: {
           ...action.sector,
           key: parsePublicKey(action.sector.key),
-          coordinates: action.sector.coordinates.map(
-            (coord: string) => new BN(coord),
-          ),
+          coordinates: action.sector.coordinates.map((coord: string) => new BN(coord)),
         },
         resource: parsePublicKey(action.resource),
         starbase: parsePublicKey(action.starbase),
@@ -68,9 +64,7 @@ const parseAction = (action: ActionRaw): Action => {
         sector: {
           ...action.sector,
           key: parsePublicKey(action.sector.key),
-          coordinates: action.sector.coordinates.map(
-            (coord: string) => new BN(coord),
-          ),
+          coordinates: action.sector.coordinates.map((coord: string) => new BN(coord)),
         },
         resource: parsePublicKey(action.resource),
         mineItem: parsePublicKey(action.mineItem),
@@ -81,9 +75,7 @@ const parseAction = (action: ActionRaw): Action => {
         sector: {
           ...action.sector,
           key: parsePublicKey(action.sector.key),
-          coordinates: action.sector.coordinates.map(
-            (coord: string) => new BN(coord),
-          ),
+          coordinates: action.sector.coordinates.map((coord: string) => new BN(coord)),
         },
         destinationSector: parsePublicKey(action.destinationSector),
       };

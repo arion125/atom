@@ -18,9 +18,9 @@ import {
   CargoPodType,
   LoadCargo,
   LoadedResources,
-} from "../../types/types";
-import { getTokenAccountsByOwner } from "../../utils/getTokenAccountsByOwner";
-import { getTokenAccountBalance } from "../../utils/getTokenAccountBalance";
+} from "../types/types";
+import { getTokenAccountsByOwner } from "../utils/getTokenAccountsByOwner";
+import { getTokenAccountBalance } from "../utils/getTokenAccountBalance";
 
 export class FleetHandler {
   // --- ATTRIBUTES ---
@@ -64,11 +64,7 @@ export class FleetHandler {
     playerHandler: PlayerHandler,
     fleetKey: PublicKey,
   ): Promise<FleetHandler> {
-    const fleetHandler = new FleetHandler(
-      starAtlasManager,
-      playerHandler,
-      fleetKey,
-    );
+    const fleetHandler = new FleetHandler(starAtlasManager, playerHandler, fleetKey);
     await fleetHandler.update();
 
     return fleetHandler;
@@ -197,9 +193,7 @@ export class FleetHandler {
   } */
 
   // OK
-  private async getCurrentCargoDataByType(
-    type: CargoPodType,
-  ): Promise<CargoPodEnhanced> {
+  private async getCurrentCargoDataByType(type: CargoPodType): Promise<CargoPodEnhanced> {
     try {
       const cargoPodKey =
         type === "CargoHold"
@@ -259,9 +253,7 @@ export class FleetHandler {
         resources.push({
           mint: tokenAccount.mint,
           amount: new BN(tokenAccount.amount),
-          spaceInCargo: new BN(tokenAccount.amount).mul(
-            resourceSpaceInCargoPerUnit,
-          ),
+          spaceInCargo: new BN(tokenAccount.amount).mul(resourceSpaceInCargoPerUnit),
           cargoTypeKey: cargoType.key,
           tokenAccountKey: tokenAccount.address,
         });
@@ -343,8 +335,7 @@ export class FleetHandler {
     const ixs: InstructionReturn[] = [];
     const mint = action.resource;
 
-    const cargoStatsDefinition =
-      this.starAtlasManager.getCargoStatsDefinition();
+    const cargoStatsDefinition = this.starAtlasManager.getCargoStatsDefinition();
 
     const cargoType = this.starAtlasManager.getCargoTypeByMint(mint); // NO IN JSON
 
@@ -365,24 +356,19 @@ export class FleetHandler {
 
     const starbasePlayerPod = action.starbasePlayer.starbasePlayerCargoPod;
 
-    const starbasePodMintAta =
-      action.starbasePlayer.starbasePlayerCargoPodMintAta;
+    const starbasePodMintAta = action.starbasePlayer.starbasePlayerCargoPodMintAta;
 
     const starbasePodMintAtaBalance = await getTokenAccountBalance(
       this.starAtlasManager.getProvider().connection,
       starbasePodMintAta,
     );
 
-    if (starbasePodMintAtaBalance === 0)
-      throw new Error("No resource in starbase");
+    if (starbasePodMintAtaBalance === 0) throw new Error("No resource in starbase");
 
     const cargoHold = this.cargoHold;
 
     const ixFleetCargoHoldMintAta =
-      this.starAtlasManager.ixCreateAssociatedTokenAccountIdempotent(
-        cargoHold.key,
-        mint,
-      );
+      this.starAtlasManager.ixCreateAssociatedTokenAccountIdempotent(cargoHold.key, mint);
     try {
       await getAccount(
         this.starAtlasManager.getProvider().connection,
@@ -403,10 +389,7 @@ export class FleetHandler {
     /* if (amountToDeposit.eq(new BN(0)))
       return { type: 'FleetCargoPodIsFull' as const }; */
 
-    amountToDeposit = BN.min(
-      amountToDeposit,
-      new BN(starbasePodMintAtaBalance),
-    );
+    amountToDeposit = BN.min(amountToDeposit, new BN(starbasePodMintAtaBalance));
 
     /* if (amountToDeposit.eq(new BN(0)))
       return { type: 'StarbaseCargoIsEmpty' as const }; */

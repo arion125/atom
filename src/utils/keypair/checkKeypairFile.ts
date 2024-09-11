@@ -1,4 +1,4 @@
-import { keypairPath } from "./../../common/constants";
+import { keypairPath } from "../../common/constants";
 import { existsSync, readFileSync } from "fs-extra";
 import { EncryptedData } from "../../types/types";
 import { PublicKey } from "@solana/web3.js";

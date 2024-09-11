@@ -5,7 +5,7 @@ import {
   KeypairAlreadyExistsError,
   KeypairNotExistsError,
   KeypairNotFoundError,
-} from "../../common/errors";
+} from "../common/errors";
 
 export class KeypairManager {
   private keypairs: Map<string, Keypair>;

@@ -2,9 +2,7 @@ import { ResourceMints, ResourceMintsRaw } from "../types/types";
 import { parsePublicKey } from "./parsePublicKey";
 
 // Funzione per convertire un piano nel tipo corretto
-export const parseResourceMints = (
-  resourceMints: ResourceMintsRaw,
-): ResourceMints => {
+export const parseResourceMints = (resourceMints: ResourceMintsRaw): ResourceMints => {
   return {
     silica: parsePublicKey(resourceMints.silica),
     nitrogen: parsePublicKey(resourceMints.nitrogen),
