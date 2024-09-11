@@ -1,20 +1,18 @@
 // src/QueueManager.ts
 
-import { PlanQueue } from "./PlanQueue";
-import { Plan } from "../types/types";
+import { Keypair } from "@solana/web3.js";
 import { QueueAlreadyExistsError, QueueNotFoundError } from "../common/errors";
-import { KeypairManager } from "./KeypairManager";
-import { StarAtlasManager } from "../core/StarAtlasManager";
-import { PlayerHandler } from "../core/PlayerHandler";
 import { FleetHandler } from "../core/FleetHandler";
+import { PlayerHandler } from "../core/PlayerHandler";
+import { StarAtlasManager } from "../core/StarAtlasManager";
+import { Plan } from "../types/types";
+import { PlanQueue } from "./PlanQueue";
 
 export class QueueManager {
   private queues: Map<string, PlanQueue>;
-  private keypairManager: KeypairManager;
 
-  constructor(keypairManager: KeypairManager) {
+  constructor() {
     this.queues = new Map();
-    this.keypairManager = keypairManager;
   }
 
   /**
@@ -22,12 +20,18 @@ export class QueueManager {
    * @param plan The plan for which the queue is created.
    * @throws QueueAlreadyExistsError if a queue with the same name already exists.
    */
-  public async addQueue(plan: Plan): Promise<void> {
+  public async addQueue({
+    keypair,
+    plan,
+  }: {
+    keypair: Keypair;
+    plan: Plan;
+  }): Promise<void> {
     if (this.queues.has(plan.name)) {
       throw new QueueAlreadyExistsError(plan.name);
     }
+
     try {
-      const keypair = this.keypairManager.getKeypair(plan.pubkey); // 1. seleziona il keypair
       const starAtlasManager = await StarAtlasManager.init(keypair); // 2. crea un star atlas manager
       const player = await PlayerHandler.init(starAtlasManager, plan.profile);
       const fleet = await FleetHandler.init(starAtlasManager, player, plan.fleet);
