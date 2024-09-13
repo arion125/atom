@@ -1,18 +1,11 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
-import {
-  Argument,
-  Command,
-  InvalidArgumentError,
-  InvalidOptionArgumentError,
-} from "commander";
-import { createAtom } from ".";
+import { Argument, Command, InvalidArgumentError } from "commander";
+import pm2 from "pm2";
 import { KeypairManager } from "./queues/KeypairManager";
 
 const cli = () => {
   const keypairManager = new KeypairManager();
-
-  const atom = createAtom();
 
   const program = new Command();
 
@@ -62,20 +55,29 @@ const cli = () => {
 
   plan
     .command("start <plan>")
-    .requiredOption(
-      "-k, --keypair <publicKey>",
-      "The publicKey of the keypair to use",
-      (value) => {
-        try {
-          return new PublicKey(value);
-        } catch {
-          throw new InvalidOptionArgumentError("Invalid public key");
+    // .requiredOption(
+    //   "-k, --keypair <publicKey>",
+    //   "The publicKey of the keypair to use",
+    //   (value) => {
+    //     try {
+    //       return new PublicKey(value);
+    //     } catch {
+    //       throw new InvalidOptionArgumentError("Invalid public key");
+    //     }
+    //   },
+    // )
+
+    .action((planName, { keypair: publicKey }: { keypair: PublicKey }) => {
+      console.log("Start plan", planName);
+
+      pm2.start({ script: "node dist/index.js", name: planName }, (err) => {
+        if (!err) {
+          process.exit(0);
         }
-      },
-    )
-    .action((planName, { keypair: publicKey }: { keypair: PublicKey }) =>
-      atom.startPlan({ plan: planName, keypair: keypairManager.getKeypair(publicKey) }),
-    );
+
+        process.exit(1);
+      });
+    });
 
   program.parse(process.argv);
 };

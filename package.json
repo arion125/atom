@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "commonjs",
+  "bin": "./dist/cli.js",
   "scripts": {
     "build": "tsc --build",
     "dev": "tsx src/cli.ts",
@@ -15,6 +17,7 @@
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/libsodium-wrappers": "^0.7.14",
+    "@types/node": "20",
     "prettier": "^3.3.3",
     "tsx": "^4.19.0",
     "typescript": "^5.6.2"
@@ -23,21 +26,31 @@
     "@inquirer/prompts": "^5.5.0",
     "@metaplex-foundation/umi": "^0.9.2",
     "@metaplex-foundation/umi-web3js-adapters": "^0.9.2",
+    "@solana/spl-token": "^0.4.8",
     "@solana/web3.js": "^1.95.3",
+    "@staratlas/anchor": "^0.25.1",
     "@staratlas/atlas-prime": "^0.13.1",
+    "@staratlas/cargo": "^1.1.0",
     "@staratlas/claim-stake": "^0.12.0",
+    "@staratlas/crafting": "^1.1.0",
+    "@staratlas/data-source": "^0.8.1",
     "@staratlas/faction-enlistment": "^0.12.0",
     "@staratlas/factory": "^0.7.1",
     "@staratlas/galactic-marketplace": "^0.12.0",
+    "@staratlas/player-profile": "^0.11.0",
+    "@staratlas/points": "^1.1.0",
+    "@staratlas/points-store": "^1.1.0",
+    "@staratlas/profile-faction": "^0.6.0",
     "@staratlas/profile-vault": "^0.11.0",
-    "@staratlas/sage": "^1.7.1",
+    "@staratlas/sage": "^1.8.0",
     "@staratlas/score": "^0.12.0",
     "axios": "^1.7.7",
     "bs58": "^6.0.0",
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
     "fs-extra": "^11.2.0",
-    "libsodium-wrappers": "^0.7.15"
+    "libsodium-wrappers": "^0.7.15",
+    "pm2": "^5.4.2"
   },
   "packageManager": "pnpm@9.10.0+sha512.73a29afa36a0d092ece5271de5177ecbf8318d454ecd701343131b8ebc0c1a91c487da46ab77c8e596d6acf1461e3594ced4becedf8921b074fbd8653ed7051c"
 }
