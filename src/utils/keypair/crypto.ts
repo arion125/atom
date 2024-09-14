@@ -106,7 +106,7 @@ export const decrypt = (
   }
 };
 
-// V3
+// V3 con libsodium
 /* import { Keypair } from "@solana/web3.js";
 import sodium from "libsodium-wrappers";
 import { EncryptedData, CryptoContent, CryptoResult } from "../../types/types";

@@ -1,3 +1,5 @@
+import { cli } from "./cli";
+
 export const main = () => {
   //const plan = fetchPlan(planName);
 
@@ -8,4 +10,9 @@ export const main = () => {
   }, 1000);
 };
 
-main();
+// main();
+
+cli();
+
+// 1. workflow che gestisce l'esecuzione del piano
+// 2. workflow che rinnova un token jwt in scadenza

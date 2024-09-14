@@ -398,3 +398,14 @@ type CryptoResult =
   | { type: "InvalidIVLength" }
   | { type: "InvalidTagLength" }
   | { type: "InvalidContentHex" };
+
+// PM2
+export type IPCPacket = {
+  type: string;
+  data: {
+    planName: string;
+    publicKey: PublicKey;
+    pwd: string;
+  };
+  topic: string;
+};
