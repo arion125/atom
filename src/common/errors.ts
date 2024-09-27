@@ -92,3 +92,10 @@ export class InvalidPublicKeyError extends Error {
     this.name = "InvalidPublicKeyError";
   }
 }
+
+export class GetPrimeDataError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "GetPrimeDataError";
+  }
+}

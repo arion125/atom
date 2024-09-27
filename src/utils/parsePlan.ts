@@ -25,12 +25,6 @@ const parseAction = (action: ActionRaw): Action => {
         starbasePlayer: {
           ...action.starbasePlayer,
           key: parsePublicKey(action.starbasePlayer.key),
-          starbasePlayerCargoPod: parsePublicKey(
-            action.starbasePlayer.starbasePlayerCargoPod,
-          ),
-          starbasePlayerCargoPodMintAta: parsePublicKey(
-            action.starbasePlayer.starbasePlayerCargoPodMintAta,
-          ),
         },
       };
     case "unloadCargo":
@@ -50,12 +44,6 @@ const parseAction = (action: ActionRaw): Action => {
         starbasePlayer: {
           ...action.starbasePlayer,
           key: parsePublicKey(action.starbasePlayer.key),
-          starbasePlayerCargoPod: parsePublicKey(
-            action.starbasePlayer.starbasePlayerCargoPod,
-          ),
-          starbasePlayerCargoPodMintAta: parsePublicKey(
-            action.starbasePlayer.starbasePlayerCargoPodMintAta,
-          ),
         },
       };
     case "startMining":

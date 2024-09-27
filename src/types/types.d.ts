@@ -47,8 +47,6 @@ export interface LoadCargoRaw extends ActionBaseRaw {
   };
   starbasePlayer: {
     key: string;
-    starbasePlayerCargoPod: string;
-    starbasePlayerCargoPodMintAta: string;
   };
 }
 
@@ -64,8 +62,6 @@ export interface LoadCargo extends ActionBase {
   };
   starbasePlayer: {
     key: PublicKey;
-    starbasePlayerCargoPod: PublicKey;
-    starbasePlayerCargoPodMintAta: PublicKey;
   };
 }
 
@@ -81,8 +77,6 @@ export interface UnloadCargoRaw extends ActionBaseRaw {
   };
   starbasePlayer: {
     key: string;
-    starbasePlayerCargoPod: string;
-    starbasePlayerCargoPodMintAta: string;
   };
 }
 
@@ -98,8 +92,6 @@ export interface UnloadCargo extends ActionBase {
   };
   starbasePlayer: {
     key: PublicKey;
-    starbasePlayerCargoPod: PublicKey;
-    starbasePlayerCargoPodMintAta: PublicKey;
   };
 }
 
@@ -353,6 +345,15 @@ export interface StarAtlasManagerPrograms {
   factionEnlistmentProgram: FactionEnlistmentIDLProgram;
 }
 
+export interface StarAtlasManagerGalia {
+  // sectors: Sector[];
+  stars: Star[];
+  planets: Planet[];
+  mineItems: MineItem[];
+  resources: Resource[];
+  starbases: Starbase[];
+}
+
 export type Priority = "None" | "Low" | "Medium" | "High";
 
 export type CargoPodType = "FuelTank" | "AmmoBank" | "CargoHold";
@@ -409,3 +410,12 @@ export type IPCPacket = {
   };
   topic: string;
 };
+
+// Atlas Prime
+export interface DummyKeysRaw {
+  feePayer: string;
+  paymentKey: string;
+  tokenVault: string;
+  rates: string;
+  conversionRate: number;
+}

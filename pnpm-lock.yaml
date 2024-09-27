@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@staratlas/player-profile': ^0.11.0
+
 importers:
 
   .:
@@ -86,6 +89,9 @@ importers:
       fs-extra:
         specifier: ^11.2.0
         version: 11.2.0
+      neverthrow:
+        specifier: ^8.0.0
+        version: 8.0.0
       pm2:
         specifier: ^5.4.2
         version: 5.4.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
@@ -632,9 +638,6 @@ packages:
 
   '@staratlas/player-profile@0.11.0':
     resolution: {integrity: sha512-SQYysx0s0lD6J9Ln4vJQDa9TS/1rSy/FeKCexwzNiKm+S0fUFv6LKOKIPsGDQDQ2MIVfVqilVtIB2Nf3DuaXgg==}
-
-  '@staratlas/player-profile@0.9.1':
-    resolution: {integrity: sha512-bqPXn6fGl+gg5zZBEK4+/Cv9oriVzrNOTW1Z+6TMFSB/vMsE51DsdyN7BWMkvwfBg2XdHfL9VntlU8j8OYD8jQ==}
 
   '@staratlas/points-store@1.1.0':
     resolution: {integrity: sha512-Rrbsnku5flephKSNkb6OYkUxGWmQAsHH76ZQKISBViXSPcQkpZ3lIYaqYaztEDx6rXSY1J5ftkJEAnxMVtkJ4A==}
@@ -1460,6 +1463,10 @@ packages:
 
   neverthrow@7.2.0:
     resolution: {integrity: sha512-iGBUfFB7yPczHHtA8dksKTJ9E8TESNTAx1UQWW6TzMF280vo9jdPYpLUXrMN1BCkPdHFdNG3fxOt2CUad8KhAw==}
+    engines: {node: '>=18'}
+
+  neverthrow@8.0.0:
+    resolution: {integrity: sha512-SX2Z50+U27I+CF3NwHE9J8MB6+bYRRub3U+1nAKxnL6c+2vW2l/WsYEC0e3Wqg8DwiJvrquqE0YhxlVTzGJGsg==}
     engines: {node: '>=18'}
 
   no-case@3.0.4:
@@ -2644,7 +2651,7 @@ snapshots:
       '@solana/web3.js': 1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@staratlas/anchor': 0.25.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@staratlas/data-source': 0.7.7(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.2)(utf-8-validate@5.0.10)
-      '@staratlas/player-profile': 0.9.1(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.2)(utf-8-validate@5.0.10)
+      '@staratlas/player-profile': 0.11.0(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.2)(utf-8-validate@5.0.10)
       '@staratlas/profile-vault': 0.9.1(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.2)(utf-8-validate@5.0.10)
       '@types/node': 20.16.5
       axios: 1.7.7
@@ -2811,18 +2818,6 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@staratlas/player-profile@0.9.1(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.2)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@solana/web3.js': 1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      '@staratlas/anchor': 0.25.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      '@staratlas/data-source': 0.7.7(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.2)(utf-8-validate@5.0.10)
-    transitivePeerDependencies:
-      - bufferutil
-      - encoding
-      - fastestsmallesttextencoderdecoder
-      - typescript
-      - utf-8-validate
-
   '@staratlas/points-store@1.1.0(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.2)(utf-8-validate@5.0.10)':
     dependencies:
       '@solana/spl-token': 0.4.8(@solana/web3.js@1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.2)(utf-8-validate@5.0.10)
@@ -2887,7 +2882,7 @@ snapshots:
       '@solana/web3.js': 1.95.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@staratlas/anchor': 0.25.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@staratlas/data-source': 0.7.7(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.2)(utf-8-validate@5.0.10)
-      '@staratlas/player-profile': 0.9.1(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.2)(utf-8-validate@5.0.10)
+      '@staratlas/player-profile': 0.11.0(bufferutil@4.0.8)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.2)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - encoding
@@ -3754,6 +3749,8 @@ snapshots:
   neverthrow@6.2.2: {}
 
   neverthrow@7.2.0: {}
+
+  neverthrow@8.0.0: {}
 
   no-case@3.0.4:
     dependencies:

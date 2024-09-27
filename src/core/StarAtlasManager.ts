@@ -1,10 +1,11 @@
-import { Connection, Keypair, PublicKey, TransactionSignature } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, SendTransactionError } from "@solana/web3.js";
 import { AnchorProvider, Program, Wallet } from "@staratlas/anchor";
 import {
   Priority,
   StarAtlasManagerPrograms,
   MainData,
   ResourceMints,
+  StarAtlasManagerGalia,
 } from "../types/types";
 import { getMainData } from "../apis/getMainData";
 import { getResourceMints } from "../apis/getResourceMints";
@@ -16,17 +17,23 @@ import {
   AsyncSigner,
   keypairToAsyncSigner,
   InstructionReturn,
-  buildDynamicTransactions,
   sendTransaction,
 } from "@staratlas/data-source";
 import { GALACTIC_MARKETPLACE_IDL } from "@staratlas/galactic-marketplace";
 import {
   Game,
   GameState,
+  getCargoPodsByAuthority,
+  MineItem,
+  Planet,
   Points,
+  Resource,
   RiskZonesData,
   SAGE_IDL,
+  Sector,
   Ship,
+  Star,
+  Starbase,
   StarbaseLevelInfo,
   StarbaseUpkeepInfo,
 } from "@staratlas/sage";
@@ -37,10 +44,19 @@ import { PROFILE_VAULT_IDL } from "@staratlas/profile-vault";
 import { PROFILE_FACTION_IDL } from "@staratlas/profile-faction";
 import { POINTS_IDL } from "@staratlas/points";
 import { POINTS_STORE_IDL } from "@staratlas/points-store";
-import { ATLAS_FEE_PAYER_IDL } from "@staratlas/atlas-prime";
+import {
+  APTransactionBuilderConstructor,
+  ATLAS_FEE_PAYER_IDL,
+  AtlasPrimeTransactionBuilder,
+  DummyKeys,
+  PostTransactionArgs,
+} from "@staratlas/atlas-prime";
 import { CLAIM_STAKE_IDL } from "@staratlas/claim-stake";
 import { SCORE_IDL } from "@staratlas/score";
 import { ENLIST_TO_FACTION_IDL } from "@staratlas/faction-enlistment";
+import { getPrimeData } from "../apis/getPrimeData";
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { PlayerHandler } from "./PlayerHandler";
 export class StarAtlasManager {
   // --- ATTRIBUTES ---
   // Connection
@@ -66,15 +82,21 @@ export class StarAtlasManager {
   private starbaseLevels!: StarbaseLevelInfo;
   private upkeep!: StarbaseUpkeepInfo;
 
+  private galia!: StarAtlasManagerGalia;
+
   private ships!: Ship[]; // Ship è l'account che contiene i dati delle navi su SAGE
 
   private cargoTypes!: CargoType[]; // CargoType è l'account che contiene i dati di ogni risorsa rispetto alle stive (es. peso)
 
+  // Atlas Prime
+  private dummyKeys!: DummyKeys;
+
   // --- METHODS ---
   private constructor() {
-    this.connection = new Connection("MAIN_RPC_URL", "confirmed");
+    this.connection = new Connection(process.env.MAIN_RPC_URL, "confirmed");
     this.priority = "None";
     this.programs = {} as StarAtlasManagerPrograms;
+    this.galia = {} as StarAtlasManagerGalia;
   }
 
   static async init(keypair: Keypair): Promise<StarAtlasManager> {
@@ -91,10 +113,13 @@ export class StarAtlasManager {
       );
       starAtlas.provider = provider;
 
-      const [mainData, resourceMints] = await Promise.all([
+      const [mainData, resourceMints, dummyKeys] = await Promise.all([
         getMainData(),
         getResourceMints(),
+        getPrimeData(),
       ]);
+
+      starAtlas.dummyKeys = dummyKeys;
 
       starAtlas.mainData = mainData;
       starAtlas.resourceMints = resourceMints;
@@ -177,10 +202,26 @@ export class StarAtlasManager {
         provider,
       );
 
-      const [game, ships, cargoTypes] = await Promise.all([
+      const [
+        game,
+        ships,
+        cargoTypes,
+        // sectors,
+        stars,
+        planets,
+        starbases,
+        mineItems,
+        resources,
+      ] = await Promise.all([
         starAtlas.fetchGame(),
         starAtlas.fetchShips(),
         starAtlas.fetchCargoTypes(),
+        // starAtlas.fetchSectors(),
+        starAtlas.fetchStars(),
+        starAtlas.fetchPlanets(),
+        starAtlas.fetchStarbases(),
+        starAtlas.fetchMineItems(),
+        starAtlas.fetchResources(),
       ]);
 
       starAtlas.game = game.game;
@@ -191,6 +232,13 @@ export class StarAtlasManager {
       starAtlas.gameState = game.gameState;
       starAtlas.starbaseLevels = game.gameState.data.fleet.starbaseLevels;
       starAtlas.upkeep = game.gameState.data.fleet.upkeep;
+
+      // starAtlas.galia.sectors = sectors;
+      starAtlas.galia.stars = stars;
+      starAtlas.galia.planets = planets;
+      starAtlas.galia.starbases = starbases;
+      starAtlas.galia.mineItems = mineItems;
+      starAtlas.galia.resources = resources;
 
       starAtlas.ships = ships;
       starAtlas.cargoTypes = cargoTypes;
@@ -234,6 +282,10 @@ export class StarAtlasManager {
 
   public getCargoTypes() {
     return this.cargoTypes;
+  }
+
+  public getGalia() {
+    return this.galia;
   }
 
   // Fetch
@@ -282,7 +334,7 @@ export class StarAtlasManager {
         "confirmed",
       );
 
-      const ships = fetchShips.flatMap((item) => (item.type === "ok" ? [item.data] : []));
+      const ships = fetchShips.flatMap((ship) => (ship.type === "ok" ? [ship.data] : []));
 
       return ships;
     } catch (e) {
@@ -309,6 +361,121 @@ export class StarAtlasManager {
     }
   }
 
+  // Unused
+  private async fetchSectors(): Promise<Sector[]> {
+    try {
+      const fetchSectors = await readAllFromRPC(
+        this.provider.connection,
+        this.programs.sageProgram,
+        Sector,
+        "confirmed",
+      );
+
+      const sectors = fetchSectors.flatMap((sector) =>
+        sector.type === "ok" ? [sector.data] : [],
+      );
+
+      return sectors;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  private async fetchStars(): Promise<Star[]> {
+    try {
+      const fetchStars = await readAllFromRPC(
+        this.provider.connection,
+        this.programs.sageProgram,
+        Star,
+        "confirmed",
+      );
+
+      const stars = fetchStars.flatMap((star) => (star.type === "ok" ? [star.data] : []));
+
+      return stars;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  private async fetchPlanets(): Promise<Planet[]> {
+    try {
+      const fetchPlanets = await readAllFromRPC(
+        this.provider.connection,
+        this.programs.sageProgram,
+        Planet,
+        "confirmed",
+      );
+
+      const planets = fetchPlanets.flatMap((planet) =>
+        planet.type === "ok" ? [planet.data] : [],
+      );
+
+      return planets;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  private async fetchStarbases(): Promise<Starbase[]> {
+    try {
+      const fetchStarbases = await readAllFromRPC(
+        this.provider.connection,
+        this.programs.sageProgram,
+        Starbase,
+        "confirmed",
+      );
+
+      const starbases = fetchStarbases.flatMap((starbase) =>
+        starbase.type === "ok" ? [starbase.data] : [],
+      );
+
+      return starbases;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  // Mine Item contains data about a resource in Sage (like hardness)
+  private async fetchMineItems(): Promise<MineItem[]> {
+    try {
+      const fetchMineItems = await readAllFromRPC(
+        this.provider.connection,
+        this.programs.sageProgram,
+        MineItem,
+        "confirmed",
+      );
+
+      const mineItems = fetchMineItems.flatMap((mineItem) =>
+        mineItem.type === "ok" ? [mineItem.data] : [],
+      );
+
+      return mineItems;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  // Resource contains data about a resource in a planet (like richness or mining stats)
+  private async fetchResources(): Promise<Resource[]> {
+    try {
+      const fetchResources = await readAllFromRPC(
+        this.provider.connection,
+        this.programs.sageProgram,
+        Resource,
+        "confirmed",
+      );
+
+      const resources = fetchResources.flatMap((resource) =>
+        resource.type === "ok" ? [resource.data] : [],
+      );
+
+      return resources;
+    } catch (e) {
+      throw e;
+    }
+  }
+
   // Setters
   setPriority(): void {}
 
@@ -325,7 +492,36 @@ export class StarAtlasManager {
     return cargoType;
   }
 
-  public async sendDynamicTransaction(
+  /***
+   * Dato un account authority, consente di ottenere i cargoPods
+   */
+  public async getCargoPodsByAuthority(authority: PublicKey) {
+    try {
+      const fetchCargoPods = await getCargoPodsByAuthority(
+        this.provider.connection,
+        this.programs.cargoProgram,
+        authority,
+      );
+
+      const cargoPods = fetchCargoPods.flatMap((pod) =>
+        pod.type === "ok" ? [pod.data] : [],
+      );
+
+      if (cargoPods.length == 0) return { type: "CargoPodsNotFound" as const };
+
+      return { type: "Success" as const, data: cargoPods };
+    } catch (e) {
+      return { type: "CargoPodsNotFound" as const };
+    }
+  }
+
+  public getStarbaseByKey(key: PublicKey) {
+    const [starbase] = this.galia.starbases.filter((item) => item.key.equals(key));
+    return starbase;
+  }
+
+  // Txs
+  /* public async sendDynamicTransaction(
     instructions: InstructionReturn[],
   ): Promise<TransactionSignature> {
     const txs = await buildDynamicTransactions(instructions, this.funder, {
@@ -354,6 +550,75 @@ export class StarAtlasManager {
     }
 
     return txSignature;
+  } */
+
+  public async buildAndSendDynamicTransactions(
+    instructions: InstructionReturn[],
+    playerHandler: PlayerHandler,
+    vaultAuthority: PublicKey,
+  ) {
+    const pta: PostTransactionArgs = {
+      /* noVault: {
+        funder: this.funder,
+        funderTokenAccount: getAssociatedTokenAddressSync(
+          this.mainData.tokens.atlas,
+          this.funder.publicKey(),
+          true,
+        ),
+      }, */
+      vault: {
+        funderVaultAuthority: vaultAuthority,
+        funderVault: getAssociatedTokenAddressSync(
+          this.mainData.tokens.atlas,
+          vaultAuthority,
+          true,
+        ), // ATLAS ATA
+        keyInput: {
+          key: this.funder,
+          profile: playerHandler.getPlayerProfile(),
+          playerProfileProgram: this.programs.playerProfileProgram,
+        },
+        vaultProgram: this.programs.profileVaultProgram,
+      },
+    };
+
+    const aptbc: APTransactionBuilderConstructor = {
+      afpUrl: "https://prime.staratlas.com/",
+      connection: this.provider.connection,
+      commitment: "confirmed",
+      dummyKeys: this.dummyKeys,
+      postArgs: pta,
+      program: this.programs.atlasPrimeProgram,
+    };
+
+    const aptb = new AtlasPrimeTransactionBuilder(aptbc);
+    aptb.add(instructions);
+
+    try {
+      const tx = await aptb.buildNextOptimalTransaction();
+      if (tx.isErr()) {
+        throw tx.error;
+      }
+      // console.log(tx.value);
+
+      const sim = await this.provider.connection.simulateTransaction(
+        tx.value.transaction,
+      );
+      console.log("Error: ", sim.value.err);
+
+      const sig = await sendTransaction(tx.value, this.provider.connection, {
+        sendOptions: { skipPreflight: true },
+      });
+      console.log(sig.value);
+
+      console.log("Remaining: ", aptb.instructions.length);
+    } catch (e) {
+      if (e instanceof SendTransactionError) {
+        const logs = await e.getLogs(this.provider.connection);
+        console.log(logs);
+      }
+      console.log(e);
+    }
   }
 
   // Instructions

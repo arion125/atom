@@ -2,9 +2,11 @@ import { PublicKey } from "@solana/web3.js";
 import { PlayerProfile, PlayerName } from "@staratlas/player-profile";
 import { ProfileFactionAccount } from "@staratlas/profile-faction";
 import { readFromRPCOrError, readAllFromRPC } from "@staratlas/data-source";
-import { SagePlayerProfile } from "@staratlas/sage";
+import { Fleet, SagePlayerProfile, Starbase, StarbasePlayer } from "@staratlas/sage";
 import { UserPoints } from "@staratlas/points";
 import { StarAtlasManager } from "./StarAtlasManager";
+import { ProfileVault } from "@staratlas/profile-vault";
+import { FleetHandler } from "./FleetHandler";
 
 export class PlayerHandler {
   // --- ATTRIBUTES ---
@@ -20,14 +22,15 @@ export class PlayerHandler {
   private playerProfileFaction!: ProfileFactionAccount;
   private playerProfilePoints!: UserPoints[];
   private playerProfileSage!: SagePlayerProfile;
+  private playerVaultAuthority!: ProfileVault;
+
+  private fleets!: FleetHandler[];
 
   // --- METHODS ---
-  private constructor(
-    starAtlasManager: StarAtlasManager,
-    playerProfileKey: PublicKey,
-  ) {
+  private constructor(starAtlasManager: StarAtlasManager, playerProfileKey: PublicKey) {
     this.starAtlasManager = starAtlasManager;
     this.playerProfileKey = playerProfileKey;
+    this.fleets = [];
   }
 
   static async init(
@@ -42,12 +45,16 @@ export class PlayerHandler {
       playerProfileFaction,
       playerProfilePoints,
       playerProfileSage,
+      playerVaultAuthority,
+      fleets,
     ] = await Promise.all([
       playerHandler.fetchPlayerProfile(),
       playerHandler.fetchPlayerProfileName(),
       playerHandler.fetchPlayerProfileFaction(),
       playerHandler.fetchPlayerPoints(),
       playerHandler.fetchPlayerProfileSage(),
+      playerHandler.fetchPlayerVaultAuthority(),
+      playerHandler.fetchAllFleets(),
     ]);
 
     playerHandler.playerProfile = playerProfile;
@@ -55,6 +62,13 @@ export class PlayerHandler {
     playerHandler.playerProfileFaction = playerProfileFaction;
     playerHandler.playerProfilePoints = playerProfilePoints;
     playerHandler.playerProfileSage = playerProfileSage;
+    playerHandler.playerVaultAuthority = playerVaultAuthority;
+
+    for (const fleet of fleets) {
+      playerHandler.fleets.push(
+        await FleetHandler.init(starAtlasManager, playerHandler, fleet),
+      );
+    }
 
     return playerHandler;
   }
@@ -70,6 +84,10 @@ export class PlayerHandler {
 
   getName() {
     return this.playerProfileName.name;
+  }
+
+  getFleets() {
+    return this.fleets;
   }
 
   // Fetch
@@ -180,6 +198,63 @@ export class PlayerHandler {
     }
   }
 
+  private async fetchPlayerVaultAuthority() {
+    try {
+      const [fetchPlayerVaultAuthority] = await readAllFromRPC(
+        this.starAtlasManager.getProvider().connection,
+        this.starAtlasManager.getPrograms().profileVaultProgram,
+        ProfileVault,
+        "confirmed",
+        [
+          {
+            memcmp: {
+              offset: 9,
+              bytes: this.playerProfileKey.toBase58(),
+            },
+          },
+        ],
+      );
+
+      const playerVaultAuthority =
+        fetchPlayerVaultAuthority.type === "ok" ? fetchPlayerVaultAuthority.data : null;
+
+      if (!playerVaultAuthority) throw new Error("Player vault authority not found");
+
+      return playerVaultAuthority;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  private async fetchAllFleets() {
+    try {
+      const fetchFleets = await readAllFromRPC(
+        this.starAtlasManager.getProvider().connection,
+        this.starAtlasManager.getPrograms().sageProgram,
+        Fleet,
+        "confirmed",
+        [
+          {
+            memcmp: {
+              offset: 41,
+              bytes: this.playerProfileKey.toBase58(),
+            },
+          },
+        ],
+      );
+
+      const fleets = fetchFleets.flatMap((fleet) =>
+        fleet.type === "ok" ? [fleet.data] : [],
+      );
+
+      if (fleets.length === 0) throw new Error();
+
+      return fleets;
+    } catch (e) {
+      throw e;
+    }
+  }
+
   // Getters
   getMiningXpAccount(): UserPoints {
     return this.playerProfilePoints.filter((account) =>
@@ -230,18 +305,18 @@ export class PlayerHandler {
   }
 
   // Helpers
-
-  /*   getStarbasePlayerAddress(starbase: Starbase) {
+  getStarbasePlayerAddress(starbase: Starbase) {
     const [starbasePlayer] = StarbasePlayer.findAddress(
-      this.sageGame.getSageProgram(),
+      this.starAtlasManager.getPrograms().sageProgram,
       starbase.key,
-      this.getSagePlayerProfileAddress(),
+      this.playerProfileSage.key,
       starbase.data.seqId,
     );
 
     return starbasePlayer;
   }
 
+  /* 
   async getStarbasePlayerByStarbaseAsync(starbase: Starbase) {
     try {
       const starbasePlayer = await readFromRPCOrError(
@@ -255,13 +330,13 @@ export class PlayerHandler {
     } catch (e) {
       return { type: 'StarbasePlayerNotFound' as const };
     }
-  }
+  } */
 
   async getStarbasePlayerPodAsync(starbase: Starbase) {
-    const starbasePlayerPod = await this.getSageGame().getCargoPodsByAuthority(
+    const starbasePlayerPod = await this.starAtlasManager.getCargoPodsByAuthority(
       this.getStarbasePlayerAddress(starbase),
     );
-    if (starbasePlayerPod.type !== 'Success') return starbasePlayerPod;
-    return { type: 'Success' as const, data: starbasePlayerPod.data[0] };
-  } */
+    if (starbasePlayerPod.type !== "Success") return starbasePlayerPod;
+    return { type: "Success" as const, data: starbasePlayerPod.data[0] };
+  }
 }

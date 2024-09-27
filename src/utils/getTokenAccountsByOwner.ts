@@ -1,14 +1,12 @@
 import { PublicKey, Connection } from "@solana/web3.js";
 import { getParsedTokenAccountsByOwner } from "@staratlas/data-source";
+import { ResultAsync } from "neverthrow";
+import { createError } from "./createError";
 
-export const getTokenAccountsByOwner = async (
-  connection: Connection,
-  owner: PublicKey,
-) => {
-  try {
-    const accounts = await getParsedTokenAccountsByOwner(connection, owner);
-    return accounts;
-  } catch (e) {
-    throw e;
-  }
+export const getTokenAccountsByOwner = (connection: Connection, owner: PublicKey) => {
+  const accounts = ResultAsync.fromPromise(
+    getParsedTokenAccountsByOwner(connection, owner),
+    createError("FailedToGetTokenAccountsByOwner"),
+  );
+  return accounts;
 };

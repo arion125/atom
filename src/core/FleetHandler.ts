@@ -12,7 +12,7 @@ import { InstructionReturn, byteArrayToString } from "@staratlas/data-source";
 import { PlayerHandler } from "./PlayerHandler";
 import { readFromRPCOrError } from "@staratlas/data-source";
 import { StarAtlasManager } from "./StarAtlasManager";
-import { getAccount } from "@solana/spl-token";
+import { getAccount, getAssociatedTokenAddressSync } from "@solana/spl-token";
 import {
   CargoPodEnhanced,
   CargoPodType,
@@ -21,6 +21,8 @@ import {
 } from "../types/types";
 import { getTokenAccountsByOwner } from "../utils/getTokenAccountsByOwner";
 import { getTokenAccountBalance } from "../utils/getTokenAccountBalance";
+import { AtomError, createError } from "../utils/createError";
+import { errAsync, ok, okAsync, ResultAsync } from "neverthrow";
 
 export class FleetHandler {
   // --- ATTRIBUTES ---
@@ -28,7 +30,7 @@ export class FleetHandler {
   private starAtlasManager: StarAtlasManager;
 
   // Keys
-  private fleetKey: PublicKey;
+  // private fleetKey: PublicKey;
 
   // Accounts
   private fleet!: Fleet;
@@ -52,19 +54,22 @@ export class FleetHandler {
   private constructor(
     starAtlasManager: StarAtlasManager,
     playerHandler: PlayerHandler,
-    fleetKey: PublicKey,
+    // fleetKey: PublicKey,
+    fleet: Fleet,
   ) {
     this.starAtlasManager = starAtlasManager;
-    this.fleetKey = fleetKey;
+    // this.fleetKey = fleetKey;
     this.owner = playerHandler;
+    this.fleet = fleet;
   }
 
   static async init(
     starAtlasManager: StarAtlasManager,
     playerHandler: PlayerHandler,
-    fleetKey: PublicKey,
+    // fleetKey: PublicKey,
+    fleet: Fleet,
   ): Promise<FleetHandler> {
-    const fleetHandler = new FleetHandler(starAtlasManager, playerHandler, fleetKey);
+    const fleetHandler = new FleetHandler(starAtlasManager, playerHandler, fleet);
     await fleetHandler.update();
 
     return fleetHandler;
@@ -76,41 +81,39 @@ export class FleetHandler {
   }
 
   // Fetch
-  private async fetchFleet(): Promise<Fleet> {
-    try {
-      const fleet = await readFromRPCOrError(
+  private fetchFleet() {
+    const res = ResultAsync.fromPromise(
+      readFromRPCOrError(
         this.starAtlasManager.getProvider().connection,
         this.starAtlasManager.getPrograms().sageProgram,
-        this.fleetKey,
+        this.fleet.key,
         Fleet,
         "confirmed",
-      );
+      ),
+      createError("FleetFetchError"),
+    );
 
-      return fleet;
-    } catch (e) {
-      throw e;
-    }
+    return res;
   }
 
-  private async fetchFleetShips(): Promise<FleetShips> {
-    try {
-      const [fleetShipsKey] = FleetShips.findAddress(
-        this.starAtlasManager.getPrograms().sageProgram,
-        this.fleetKey,
-      );
+  private fetchFleetShips() {
+    const [fleetShipsKey] = FleetShips.findAddress(
+      this.starAtlasManager.getPrograms().sageProgram,
+      this.fleet.key,
+    );
 
-      const fleetShips = await readFromRPCOrError(
+    const fleetShips = ResultAsync.fromPromise(
+      readFromRPCOrError(
         this.starAtlasManager.getProvider().connection,
         this.starAtlasManager.getPrograms().sageProgram,
         fleetShipsKey,
         FleetShips,
         "confirmed",
-      );
+      ),
+      createError("FleetShipsFetchError"),
+    );
 
-      return fleetShips;
-    } catch (e) {
-      throw e;
-    }
+    return fleetShips;
   }
 
   // !! this function throws an error
@@ -193,137 +196,162 @@ export class FleetHandler {
   } */
 
   // OK
-  private async getCurrentCargoDataByType(type: CargoPodType): Promise<CargoPodEnhanced> {
-    try {
-      const cargoPodKey =
-        type === "CargoHold"
-          ? this.fleet.data.cargoHold
-          : type === "FuelTank"
-            ? this.fleet.data.fuelTank
-            : type === "AmmoBank"
-              ? this.fleet.data.ammoBank
-              : (null as never);
+  private getCurrentCargoDataByType(
+    type: CargoPodType,
+  ): ResultAsync<
+    CargoPodEnhanced,
+    | AtomError<"CargoPodKeyError">
+    | AtomError<"CargoPodMaxCapacityError">
+    | AtomError<"FailedToGetTokenAccountsByOwner">
+  > {
+    const cargoPodKey: ResultAsync<PublicKey, AtomError<"CargoPodKeyError">> = type ===
+    "CargoHold"
+      ? okAsync(this.fleet.data.cargoHold)
+      : type === "FuelTank"
+        ? okAsync(this.fleet.data.fuelTank)
+        : type === "AmmoBank"
+          ? okAsync(this.fleet.data.ammoBank)
+          : errAsync(createError("CargoPodKeyError")("Cargo pod key error"));
 
-      const cargoPodMaxCapacity: BN =
-        type === "CargoHold"
-          ? new BN(this.stats.cargoStats.cargoCapacity)
-          : type === "FuelTank"
-            ? new BN(this.stats.cargoStats.fuelCapacity)
-            : type === "AmmoBank"
-              ? new BN(this.stats.cargoStats.ammoCapacity)
-              : new BN(0);
+    const cargoPodMaxCapacity: BN =
+      type === "CargoHold"
+        ? new BN(this.stats.cargoStats.cargoCapacity)
+        : type === "FuelTank"
+          ? new BN(this.stats.cargoStats.fuelCapacity)
+          : type === "AmmoBank"
+            ? new BN(this.stats.cargoStats.ammoCapacity)
+            : new BN(0);
 
-      //if (!cargoPodType || cargoPodMaxCapacity.eq(new BN(0)))
-      //  return { type: 'CargoPodTypeError' as const };
-
-      const cargoPod = await this.getCargoPodByKey(cargoPodKey);
-      //if (cargoPod.type !== 'Success') return cargoPod;
-
-      const cargoPodTokenAccounts = await getTokenAccountsByOwner(
-        this.starAtlasManager.getProvider().connection,
-        cargoPod.key,
+    if (cargoPodMaxCapacity.eq(new BN(0))) {
+      return errAsync(
+        createError("CargoPodMaxCapacityError")("Cargo pod max capacity error"),
       );
-
-      if (cargoPodTokenAccounts.length === 0) {
-        const cargoPodEnhanced: CargoPodEnhanced = {
-          key: cargoPod.key,
-          loadedAmount: new BN(0),
-          resources: [],
-          maxCapacity: cargoPodMaxCapacity,
-          fullLoad: false,
-        };
-        return cargoPodEnhanced;
-      }
-
-      const resources: LoadedResources[] = [];
-
-      for (const tokenAccount of cargoPodTokenAccounts) {
-        const [cargoTypeKey] = CargoType.findAddress(
-          this.starAtlasManager.getPrograms().cargoProgram,
-          this.starAtlasManager.getCargoStatsDefinition().key,
-          tokenAccount.mint,
-          this.starAtlasManager.getCargoStatsDefinition().data.seqId,
-        );
-        const [cargoType] = this.starAtlasManager
-          .getCargoTypes()
-          .filter((item) => item.key.equals(cargoTypeKey));
-
-        const resourceSpaceInCargoPerUnit = cargoType.stats[0] as BN;
-
-        resources.push({
-          mint: tokenAccount.mint,
-          amount: new BN(tokenAccount.amount),
-          spaceInCargo: new BN(tokenAccount.amount).mul(resourceSpaceInCargoPerUnit),
-          cargoTypeKey: cargoType.key,
-          tokenAccountKey: tokenAccount.address,
-        });
-      }
-
-      let loadedAmount = new BN(0);
-      resources.forEach((item) => {
-        loadedAmount = loadedAmount.add(item.spaceInCargo);
-      });
-
-      const cargoPodEnhanced: CargoPodEnhanced = {
-        key: cargoPod.key,
-        loadedAmount,
-        resources,
-        maxCapacity: cargoPodMaxCapacity,
-        fullLoad: loadedAmount.eq(cargoPodMaxCapacity),
-      };
-
-      return cargoPodEnhanced;
-    } catch (e) {
-      throw e;
     }
+
+    /* const cargoPodResult = this.getCargoPodByKey(cargoPodKey).andThen((cargoPod) => {
+
+    });
+
+    if (cargoPodResult.isErr()) {
+      return errAsync(cargoPodResult.error);
+    } */
+
+    return cargoPodKey
+      .andThen((cargoPodKey) => {
+        return getTokenAccountsByOwner(
+          this.starAtlasManager.getProvider().connection,
+          cargoPodKey,
+        ).map((cargoPodTokenAccounts) => {
+          return [cargoPodKey, cargoPodTokenAccounts] as const;
+        });
+      })
+      .map(([cargoPodKey, cargoPodTokenAccounts]) => {
+        if (cargoPodTokenAccounts.length === 0) {
+          const cargoPodEnhanced: CargoPodEnhanced = {
+            key: cargoPodKey,
+            loadedAmount: new BN(0),
+            resources: [],
+            maxCapacity: cargoPodMaxCapacity,
+            fullLoad: false,
+          };
+          return cargoPodEnhanced;
+        }
+
+        const resources: LoadedResources[] = [];
+
+        for (const tokenAccount of cargoPodTokenAccounts) {
+          const [cargoTypeKey] = CargoType.findAddress(
+            this.starAtlasManager.getPrograms().cargoProgram,
+            this.starAtlasManager.getCargoStatsDefinition().key,
+            tokenAccount.mint,
+            this.starAtlasManager.getCargoStatsDefinition().data.seqId,
+          );
+          const [cargoType] = this.starAtlasManager
+            .getCargoTypes()
+            .filter((item) => item.key.equals(cargoTypeKey));
+
+          const resourceSpaceInCargoPerUnit = cargoType.stats[0] as BN;
+
+          resources.push({
+            mint: tokenAccount.mint,
+            amount: new BN(tokenAccount.amount),
+            spaceInCargo: new BN(tokenAccount.amount).mul(resourceSpaceInCargoPerUnit),
+            cargoTypeKey: cargoType.key,
+            tokenAccountKey: tokenAccount.address,
+          });
+        }
+
+        let loadedAmount = new BN(0);
+        resources.forEach((item) => {
+          loadedAmount = loadedAmount.add(item.spaceInCargo);
+        });
+
+        const cargoPodEnhanced: CargoPodEnhanced = {
+          key: cargoPodKey,
+          loadedAmount,
+          resources,
+          maxCapacity: cargoPodMaxCapacity,
+          fullLoad: loadedAmount.eq(cargoPodMaxCapacity),
+        };
+
+        return cargoPodEnhanced;
+      });
   }
 
   // OK
-  private async getCargoPodByKey(cargoPodKey: PublicKey): Promise<CargoPod> {
-    try {
-      const cargoPod = await readFromRPCOrError(
+  private getCargoPodByKey(cargoPodKey: PublicKey) {
+    const cargoPod = ResultAsync.fromPromise(
+      readFromRPCOrError(
         this.starAtlasManager.getProvider().connection,
         this.starAtlasManager.getPrograms().cargoProgram,
         cargoPodKey,
         CargoPod,
         "confirmed",
-      );
-      return cargoPod;
-    } catch (e) {
-      throw e;
-    }
+      ),
+      createError("CargoPodFetchError"),
+    );
+
+    return cargoPod;
   }
 
   // OK
   private async update() {
-    try {
-      const [fleet, fleetShips] = await Promise.all([
-        await this.fetchFleet(),
-        await this.fetchFleetShips(),
-      ]);
+    const fleetResult = await ResultAsync.combine([
+      this.fetchFleet(),
+      this.fetchFleetShips(),
+    ]);
 
-      this.fleet = fleet;
-      this.stats = fleet.data.stats;
-
-      this.fleetShips = fleetShips;
-
-      this.onlyDataRunner = this.stats.miscStats.scanCost === 0;
-      this.onlyMiners = this.stats.cargoStats.ammoConsumptionRate === 0;
-
-      this.state = fleet.state;
-
-      const [fuelTank, ammoBank, cargoHold] = await Promise.all([
-        await this.getCurrentCargoDataByType("FuelTank"),
-        await this.getCurrentCargoDataByType("AmmoBank"),
-        await this.getCurrentCargoDataByType("CargoHold"),
-      ]);
-
-      this.fuelTank = fuelTank;
-      this.ammoBank = ammoBank;
-      this.cargoHold = cargoHold;
-    } catch (e) {
-      throw e;
+    if (fleetResult.isErr()) {
+      return fleetResult;
     }
+
+    const [fleet, fleetShips] = fleetResult.value;
+
+    this.fleet = fleet;
+    this.stats = fleet.data.stats;
+    this.fleetShips = fleetShips;
+    this.state = fleet.state;
+
+    this.onlyDataRunner = this.stats.miscStats.scanCost === 0;
+    this.onlyMiners = this.stats.cargoStats.ammoConsumptionRate === 0;
+
+    const cargoResult = await ResultAsync.combine([
+      this.getCurrentCargoDataByType("FuelTank"),
+      this.getCurrentCargoDataByType("AmmoBank"),
+      this.getCurrentCargoDataByType("CargoHold"),
+    ]);
+
+    if (cargoResult.isErr()) {
+      return cargoResult;
+    }
+
+    const [fuelTank, ammoBank, cargoHold] = cargoResult.value;
+
+    this.fuelTank = fuelTank;
+    this.ammoBank = ammoBank;
+    this.cargoHold = cargoHold;
+
+    ok(null);
   }
 
   async ixLoadCargo(action: LoadCargo) {
@@ -350,13 +378,19 @@ export class FleetHandler {
     );
     if (currentStarbase.type !== 'Success') return currentStarbase; */
 
-    const starbase = action.starbase;
+    const starbase = this.starAtlasManager.getStarbaseByKey(action.starbase);
 
     const starbasePlayer = action.starbasePlayer.key;
 
-    const starbasePlayerPod = action.starbasePlayer.starbasePlayerCargoPod;
+    const starbasePlayerPod = await this.owner.getStarbasePlayerPodAsync(starbase);
+    if (starbasePlayerPod.type !== "Success")
+      throw new Error("No starbase player pod found");
 
-    const starbasePodMintAta = action.starbasePlayer.starbasePlayerCargoPodMintAta;
+    const starbasePodMintAta = getAssociatedTokenAddressSync(
+      mint,
+      starbasePlayerPod.data.key,
+      true,
+    );
 
     const starbasePodMintAtaBalance = await getTokenAccountBalance(
       this.starAtlasManager.getProvider().connection,
@@ -395,7 +429,7 @@ export class FleetHandler {
       return { type: 'StarbaseCargoIsEmpty' as const }; */
 
     const input: DepositCargoToFleetInput = {
-      keyIndex: 0,
+      keyIndex: 1, // IMPORTANT FOR HOT WALLET. HOW DOES IT WORKS?
       amount: amountToDeposit,
     };
 
@@ -406,10 +440,10 @@ export class FleetHandler {
       this.owner.getPlayerProfile().key,
       this.owner.getPlayerProfileFaction().key,
       "funder",
-      starbase,
+      starbase.key,
       starbasePlayer,
-      this.fleetKey,
-      starbasePlayerPod,
+      this.fleet.key,
+      starbasePlayerPod.data.key,
       cargoHold.key,
       cargoType.key,
       cargoStatsDefinition.key,
